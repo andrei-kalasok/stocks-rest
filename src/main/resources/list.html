@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stocks : View all</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Stocks : View all</h1>
+    <div class="container">
+        <table class="table table-bordered table-striped" style="width:100%">
+            <thead>
+            <tr>
+                <td>ID</td>
+                <td>Name</td>
+                <td>Price</td>
+                <td>LastUpdate</td>
+            </tr>
+            </thead>
+            <tbody>
+            ${stocks}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
