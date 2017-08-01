@@ -30,7 +30,7 @@ public class Stock {
 
 	@Min(0)
 	@NotNull
-	private BigDecimal currentPrice;
+	private BigDecimal price;
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private Timestamp lastUpdate;
 
@@ -56,12 +56,12 @@ public class Stock {
 		this.name = name;
 	}
 
-	public BigDecimal getCurrentPrice() {
-		return currentPrice;
+	public BigDecimal getPrice() {
+		return price;
 	}
 
-	public void setCurrentPrice(BigDecimal price) {
-		this.currentPrice = price;
+	public void setPrice(BigDecimal price) {
+		this.price = price;
 	}
 
 	public Timestamp getLastUpdate() {

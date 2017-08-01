@@ -27,7 +27,7 @@ public class Application {
 	public static Stock stock(String name, Double price) {
 		Stock stock = new Stock();
 		stock.setName(name);
-		stock.setCurrentPrice(BigDecimal.valueOf(price));
+		stock.setPrice(BigDecimal.valueOf(price));
 		return stock;
 	}
 }

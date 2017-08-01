@@ -98,7 +98,7 @@ public class StockRestControllerTest {
 
 	@Test
 	public void updateNonExistingStock() {
-		ResponseEntity<Stock> entity = callUpdateStockEndPoint(1, BigDecimal.ZERO);
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, BigDecimal.ZERO);
 
 		assertEquals(404, entity.getStatusCodeValue());
 	}
@@ -110,10 +110,11 @@ public class StockRestControllerTest {
 		StockAnswer stockToUpdate = new StockAnswer(1, "StockToUpdate", BigDecimal.TEN);
 		doAnswer(stockToUpdate).when(repository).save(any(Stock.class));
 
-		ResponseEntity<Stock> entity = callUpdateStockEndPoint(storedStock.getId(), BigDecimal.TEN);
+		ResponseEntity<String> entity = callUpdateStockEndPoint(storedStock.getId(), BigDecimal.TEN);
 
 		assertEquals(200, entity.getStatusCodeValue());
-		assertStock(stockToUpdate, entity.getBody());
+		assertEquals("{\"id\":1,\"name\":\"StockToUpdate\",\"price\":10,\"lastUpdate\":null}",
+				entity.getBody());
 		assertTrue("The storedStock hasn't been updated", stockToUpdate.isStored());
 	}
 
@@ -122,9 +123,10 @@ public class StockRestControllerTest {
 		StockAnswer storedStock = new StockAnswer(1, "StockToUpdate", BigDecimal.ONE);
 		when(repository.findOne(storedStock.getId())).thenReturn(storedStock);
 
-		ResponseEntity<Stock> entity = callUpdateStockEndPoint(1, null);
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, null);
 
 		assertEquals(400, entity.getStatusCodeValue());
+		assertEquals("{\"statusCode\":400,\"message\":\"Required request body is missing\"}", entity.getBody());
 	}
 
 	private ResponseEntity<Stock> callGetStockEndPoint(Integer id) {
@@ -151,7 +153,7 @@ public class StockRestControllerTest {
 		).getStatusCode();
 	}
 
-	private ResponseEntity<Stock> callUpdateStockEndPoint(int id, BigDecimal price) {
+	private ResponseEntity<String> callUpdateStockEndPoint(int id, BigDecimal price) {
 		MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 		headers.add("Content-Type", "application/json");
 		HttpEntity<?> httpEntity = new HttpEntity<>(price, headers);
@@ -159,13 +161,13 @@ public class StockRestControllerTest {
 				url + "/" + id,
 				HttpMethod.PUT,
 				httpEntity,
-				Stock.class
+				String.class
 		);
 	}
 
 	private static void assertStock(Stock stock1, Stock stock2) {
 		assertEquals(stock1.getName(), stock2.getName());
-		assertEquals(stock1.getCurrentPrice(), stock2.getCurrentPrice());
+		assertEquals(stock1.getPrice(), stock2.getPrice());
 	}
 
 	private static class StockAnswer extends Stock implements Answer {
@@ -175,7 +177,7 @@ public class StockRestControllerTest {
 		private StockAnswer(int id, String name, BigDecimal price) {
 			setId(id);
 			setName(name);
-			setCurrentPrice(price);
+			setPrice(price);
 
 		}
 

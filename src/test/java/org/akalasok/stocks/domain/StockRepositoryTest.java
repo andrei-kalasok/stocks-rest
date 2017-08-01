@@ -28,10 +28,9 @@ public class StockRepositoryTest {
 		repository.save(stock);
 		Timestamp firstUpdate = stock.getLastUpdate();
 
-		stock.setCurrentPrice(BigDecimal.TEN);
+		stock.setPrice(BigDecimal.TEN);
 		repository.save(stock);
 
 		assertTrue("LastUpdate field should be updated", stock.getLastUpdate().after(firstUpdate));
 	}
-
 }

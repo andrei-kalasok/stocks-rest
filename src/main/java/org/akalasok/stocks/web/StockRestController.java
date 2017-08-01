@@ -52,13 +52,8 @@ public class StockRestController {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 
-		if (price == null) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
+		stock.setPrice(price);
 
-		stock.setCurrentPrice(price);
-		repository.save(stock);
-
-		return ResponseEntity.ok(stock);
+		return ResponseEntity.ok(repository.save(stock));
 	}
 }
