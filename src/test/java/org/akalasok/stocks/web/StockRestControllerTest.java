@@ -35,7 +35,7 @@ import org.springframework.util.MultiValueMap;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class StockControllerTest {
+public class StockRestControllerTest {
 
 	@LocalServerPort
 	private int port;

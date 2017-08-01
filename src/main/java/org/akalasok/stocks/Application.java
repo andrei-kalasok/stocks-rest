@@ -24,7 +24,7 @@ public class Application {
 		};
 	}
 
-	private Stock stock(String name, Double price) {
+	public static Stock stock(String name, Double price) {
 		Stock stock = new Stock();
 		stock.setName(name);
 		stock.setCurrentPrice(BigDecimal.valueOf(price));

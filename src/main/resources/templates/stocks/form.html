@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Stocks : Create</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}"
+          href="../../css/bootstrap.min.css"/>
+</head>
+<body>
+<div class="container">
+    <div th:replace="fragments :: navbar"></div>
+    <h1>Stocks : Create/Modify</h1>
+    <form id="stockForm" th:action="@{/(form)}" th:object="${stock}"
+          action="#" method="post">
+        <div class="pull-right">
+            <a th:href="@{/}" href="stocks.html"> Stocks </a>
+        </div>
+        <input type="hidden" th:field="*{id}"
+               th:class="${#fields.hasErrors('id')} ? 'field-error'"/>
+        <label for="name">Name</label>
+        <div th:if="${#fields.hasErrors('name')}" style="width: 220px;" th:class="alert-error" th:errors="*{name}">Name Error</div>
+        <input type="text" th:field="*{name}" th:class="${#fields.hasErrors('name')} ? 'field-error'"/>
+        <label for="currentPrice">Price</label>
+        <div th:if="${#fields.hasErrors('currentPrice')}" style="width: 220px;" th:class="alert-error" th:errors="*{currentPrice}">Current Price Error</div>
+        <input type="number" step="0.01" th:field="*{currentPrice}"
+               th:class="${#fields.hasErrors('currentPrice')} ? 'field-error'"></input>
+        <div class="form-actions">
+            <input type="submit" value="Save"/>
+        </div>
+    </form>
+</div>
+</body>
+</html>

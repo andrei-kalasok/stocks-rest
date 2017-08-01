@@ -4,14 +4,10 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-
-import javax.annotation.PostConstruct;
 
 import org.akalasok.stocks.domain.Stock;
 import org.akalasok.stocks.domain.StockRepository;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,18 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * @author Andrei Kalasok
  */
-@RestController()
-public class StockController {
+@RestController
+public class StockRestController {
 
 	@Autowired
 	private StockRepository repository;
-
-	private String viewTemplate;
-
-	@PostConstruct
-	public void init() throws IOException {
-		viewTemplate = IOUtils.toString(StockController.class.getResourceAsStream("/list.html"));
-	}
 
 	@RequestMapping(value = "/api/stocks/{id}", method = GET, produces = "application/json; charset=UTF-8")
 	@ResponseBody
@@ -55,7 +44,7 @@ public class StockController {
 		return repository.save(stock).getId();
 	}
 
-	@RequestMapping(value = "/api/stocks/{id}", method = PUT, consumes = "application/json; charset=UTF-8")
+	@RequestMapping(value = "/api/stocks/{id}", method = PUT)
 	@ResponseBody
 	public ResponseEntity<Stock> updateStock(@PathVariable int id, @RequestBody BigDecimal price) {
 		Stock stock = repository.findOne(id);
@@ -71,25 +60,5 @@ public class StockController {
 		repository.save(stock);
 
 		return ResponseEntity.ok(stock);
-	}
-
-
-	@RequestMapping(value = "view")
-	public String viewStocks() {
-		StringBuilder stocks = new StringBuilder();
-		for (Stock stock : repository.findAll()) {
-			addStockToTable(stocks, stock);
-		}
-
-		return viewTemplate.replace("${stocks}", stocks.toString());
-	}
-
-	private void addStockToTable(StringBuilder stocks, Stock stock) {
-		stocks.append("<tr>");
-		stocks.append("<td>").append(stock.getId()).append("</td>");
-		stocks.append("<td>").append(stock.getName()).append("</td>");
-		stocks.append("<td>").append(stock.getCurrentPrice()).append("</td>");
-		stocks.append("<td>").append(stock.getLastUpdate()).append("</td>");
-		stocks.append("</tr>");
 	}
 }
