@@ -30,7 +30,7 @@
                 <td><a href="view.html" th:href="@{'/' + ${stock.id}}"
                        th:text="${stock.id}"> 1</a></td>
                 <td th:text="${stock.name}">Name</td>
-                <td th:text="${stock.currentPrice}">100.13</td>
+                <td th:text="${stock.price}">100.13</td>
                 <td th:text="${#calendars.format(stock.lastUpdate)}"></td>
             </tr>
             </tbody>

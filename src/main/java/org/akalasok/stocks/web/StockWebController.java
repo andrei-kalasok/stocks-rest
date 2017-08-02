@@ -60,19 +60,25 @@ public class StockWebController {
 	}
 
 	@PostMapping
-	public ModelAndView create(@Valid Stock stock, BindingResult result,
+	public ModelAndView create(@Valid Stock newStock, BindingResult result,
 	                           RedirectAttributes redirect) {
 		if (result.hasErrors()) {
 			return new ModelAndView("stocks/form", "formErrors", result.getAllErrors());
 		}
+		Stock stock;
+		String message;
+		if (newStock.getId() > 0) {
+			stock = repository.findOne(newStock.getId());
+			stock.setPrice(newStock.getPrice());
+			stock.setName(newStock.getName());
+			message = "Successfully updated a stock";
+		} else {
+			stock = newStock;
+			message = "Successfully created a new stock";
+		}
 		stock = this.repository.save(stock);
-		redirect.addFlashAttribute("globalStock", "Successfully created a new stock");
+		redirect.addFlashAttribute("globalMessage", message);
 		return new ModelAndView("redirect:/{stock.id}", "stock.id", stock.getId());
-	}
-
-	@RequestMapping("foo")
-	public String foo() {
-		throw new RuntimeException("Expected exception in controller");
 	}
 
 	@GetMapping(value = "delete/{id}")

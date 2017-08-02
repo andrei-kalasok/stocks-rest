@@ -10,7 +10,7 @@
     <div th:replace="fragments :: navbar"></div>
     <h1>Stocks : View</h1>
     <div class="alert alert-success" th:if="${globalMessage}"
-         th:text="${globalMessage}">Some Success stock
+         th:text="${globalMessage}">Some global message
     </div>
     <div class="pull-right">
         <a th:href="@{/}" href="list.html"> Stocks </a>
@@ -21,7 +21,7 @@
         <dt>Name</dt>
         <dd id="summary" th:text="${stock.name}">A name...</dd>
         <dt>Price</dt>
-        <dd id="text" th:text="${stock.currentPrice}">0.</dd>
+        <dd id="text" th:text="${stock.price}">0.</dd>
         <dt>Modified</dt>
         <dd id="created" th:text="${#calendars.format(stock.lastUpdate)}">
             July 31, 2017 4:43:14 PM CET
