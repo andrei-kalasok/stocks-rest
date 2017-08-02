@@ -5,10 +5,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Path;
 
 import org.akalasok.stocks.domain.Stock;
 import org.akalasok.stocks.domain.StockRepository;
@@ -28,6 +35,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -142,6 +150,30 @@ public class StockRestControllerTest {
 		assertEquals(409, entity.getStatusCodeValue());
 		String errorMsg = "{\"statusCode\":409,\"message\":\"Simultaneous price update, please check current price and try again\"}";
 		assertEquals(errorMsg, entity.getBody());
+	}
+
+	@Test
+	public void updateWithNegativePrice() {
+		StockAnswer stock = new StockAnswer(1, null, BigDecimal.valueOf(-5.));
+		when(repository.findOne(stock.getId())).thenReturn(stock);
+		TransactionSystemException exception =
+				new TransactionSystemException("", violationException("price", "must be greater than or equal to 0"));
+		when(repository.save(any(Stock.class))).thenThrow(exception);
+
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, stock);
+
+		assertEquals(400, entity.getStatusCodeValue());
+		String errorMsg = "{\"statusCode\":400,\"message\":\"price - must be greater than or equal to 0\"}";
+		assertEquals(errorMsg, entity.getBody());
+	}
+
+	private ConstraintViolationException violationException(String pathValue, String message) {
+		ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+		Path path = mock(Path.class);
+		when(path.toString()).thenReturn(pathValue);
+		when(violation.getMessage()).thenReturn(message);
+		when(violation.getPropertyPath()).thenReturn(path);
+		return new ConstraintViolationException(new HashSet<>(Collections.singleton(violation)));
 	}
 
 	private ResponseEntity<Stock> callGetStockEndPoint(Integer id) {
