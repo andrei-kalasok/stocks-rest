@@ -98,7 +98,7 @@ public class StockRestControllerTest {
 
 	@Test
 	public void updateNonExistingStock() {
-		ResponseEntity<String> entity = callUpdateStockEndPoint(1, BigDecimal.ZERO);
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, new StockAnswer(null, BigDecimal.ZERO));
 
 		assertEquals(404, entity.getStatusCodeValue());
 	}
@@ -110,7 +110,7 @@ public class StockRestControllerTest {
 		StockAnswer stockToUpdate = new StockAnswer(1, "StockToUpdate", BigDecimal.TEN);
 		doAnswer(stockToUpdate).when(repository).save(any(Stock.class));
 
-		ResponseEntity<String> entity = callUpdateStockEndPoint(storedStock.getId(), BigDecimal.TEN);
+		ResponseEntity<String> entity = callUpdateStockEndPoint(storedStock.getId(), stockToUpdate);
 
 		assertEquals(200, entity.getStatusCodeValue());
 		assertEquals("{\"id\":1,\"name\":\"StockToUpdate\",\"price\":10,\"lastUpdate\":null}",
@@ -153,10 +153,10 @@ public class StockRestControllerTest {
 		).getStatusCode();
 	}
 
-	private ResponseEntity<String> callUpdateStockEndPoint(int id, BigDecimal price) {
+	private ResponseEntity<String> callUpdateStockEndPoint(int id, Stock stock) {
 		MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
 		headers.add("Content-Type", "application/json");
-		HttpEntity<?> httpEntity = new HttpEntity<>(price, headers);
+		HttpEntity<?> httpEntity = new HttpEntity<>(stock, headers);
 		return restTemplate.exchange(
 				url + "/" + id,
 				HttpMethod.PUT,
