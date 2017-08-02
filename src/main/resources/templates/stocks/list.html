@@ -20,11 +20,13 @@
                 <td>Name</td>
                 <td>Price</td>
                 <td>Modified</td>
+                <td></td>
+                <td></td>
             </tr>
             </thead>
             <tbody>
             <tr th:if="${stocks.empty}">
-                <td colspan="3">No stocks</td>
+                <td colspan="5">No stocks</td>
             </tr>
             <tr th:each="stock : ${stocks}">
                 <td><a href="view.html" th:href="@{'/' + ${stock.id}}"
@@ -32,6 +34,8 @@
                 <td th:text="${stock.name}">Name</td>
                 <td th:text="${stock.price}">100.13</td>
                 <td th:text="${#calendars.format(stock.lastUpdate)}"></td>
+                <td><a href="stocks" th:href="@{'/modify/' + ${stock.id}}">modify</a></td>
+                <td><a href="stocks" th:href="@{'/delete/' + ${stock.id}}">delete</a></td>
             </tr>
             </tbody>
         </table>
