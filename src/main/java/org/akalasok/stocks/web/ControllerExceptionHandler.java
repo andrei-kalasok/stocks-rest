@@ -46,6 +46,9 @@ public class ControllerExceptionHandler {
 	public ResponseEntity<?> handleConstraintViolationException(HttpServletRequest req, ConstraintViolationException e) {
 		StringBuilder message = new StringBuilder();
 		for (ConstraintViolation<?> constraintViolation : e.getConstraintViolations()) {
+			if(message.length() > 0){
+				message.append(", ");
+			}
 			message.append(constraintViolation.getPropertyPath())
 					.append(" - ")
 					.append(constraintViolation.getMessage());
