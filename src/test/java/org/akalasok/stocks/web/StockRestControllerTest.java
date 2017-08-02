@@ -63,7 +63,7 @@ public class StockRestControllerTest {
 	}
 
 	@Test
-	public void getStockNotFound() {
+	public void getNonExistingStock() {
 		ResponseEntity<Stock> entity = callGetStockEndPoint(1);
 
 		assertEquals(404, entity.getStatusCodeValue());
@@ -92,6 +92,15 @@ public class StockRestControllerTest {
 		assertEquals(2, respStocks.length);
 		assertStock(stocks.get(0), respStocks[0]);
 		assertStock(stocks.get(1), respStocks[1]);
+	}
+
+	@Test
+	public void getStocksWithUnhandledException() {
+		when(repository.findOne(1)).thenThrow(new RuntimeException("Unhandled exception"));
+
+		String message = restTemplate.getForObject(url + "/" + 1, String.class);
+
+		assertEquals("{\"statusCode\":500,\"message\":\"Unhandled exception\"}", message);
 	}
 
 	@Test
@@ -128,7 +137,7 @@ public class StockRestControllerTest {
 	}
 
 	@Test
-	public void updateWithNullPrice() {
+	public void updateWithEmptyBody() {
 		StockAnswer storedStock = new StockAnswer(1, "StockToUpdate", BigDecimal.ONE);
 		when(repository.findOne(storedStock.getId())).thenReturn(storedStock);
 

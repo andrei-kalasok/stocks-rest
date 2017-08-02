@@ -34,7 +34,7 @@ public class StockRepositoryTest {
 
 		stock.setPrice(BigDecimal.TEN);
 		repository.save(stock);
-		entityManager.flush();
+		entityManager.flush(); //force update to database
 
 		assertTrue("LastUpdate field should be updated", stock.getLastUpdate().after(lastUpdate));
 	}
