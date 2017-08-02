@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,6 +32,17 @@ public class ControllerExceptionHandler {
 		);
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 		return new ResponseEntity<>(new ErrorMessage(status.value(), e.getMessage()), status);
+	}
+
+	@ExceptionHandler(value = ObjectOptimisticLockingFailureException.class)
+	public ResponseEntity<?> handleOptimisticLockingException(HttpServletRequest req, Exception e){
+		logger.warn("Race condition price update on '{} {}'",
+				req.getMethod(),
+				req.getRequestURI() + (req.getQueryString() != null ? req.getQueryString() : ""));
+
+		HttpStatus status = HttpStatus.CONFLICT;
+		String message = "Simultaneous price update, please check current price and try again";
+		return new ResponseEntity<Object>(new ErrorMessage(status.value(), message), status);
 	}
 
 	@ExceptionHandler(value = TransactionSystemException.class)

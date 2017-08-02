@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.Version;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -32,6 +33,7 @@ public class Stock {
 	@NotNull
 	private BigDecimal price;
 	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@Version
 	private Timestamp lastUpdate;
 
 	@PreUpdate

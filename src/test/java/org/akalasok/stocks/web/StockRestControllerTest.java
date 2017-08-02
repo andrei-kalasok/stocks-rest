@@ -26,6 +26,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -127,6 +128,20 @@ public class StockRestControllerTest {
 
 		assertEquals(400, entity.getStatusCodeValue());
 		assertEquals("{\"statusCode\":400,\"message\":\"Required request body is missing\"}", entity.getBody());
+	}
+
+	@Test
+	public void updateWithOptimisticLockingException() {
+		StockAnswer stock = new StockAnswer(1, null, BigDecimal.ONE);
+		when(repository.findOne(stock.getId())).thenReturn(stock);
+		when(repository.save(any(Stock.class))).thenThrow(
+				new ObjectOptimisticLockingFailureException(Stock.class, stock));
+
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, stock);
+
+		assertEquals(409, entity.getStatusCodeValue());
+		String errorMsg = "{\"statusCode\":409,\"message\":\"Simultaneous price update, please check current price and try again\"}";
+		assertEquals(errorMsg, entity.getBody());
 	}
 
 	private ResponseEntity<Stock> callGetStockEndPoint(Integer id) {
