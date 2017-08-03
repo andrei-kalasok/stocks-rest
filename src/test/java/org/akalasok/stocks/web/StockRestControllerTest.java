@@ -1,0 +1,257 @@
+package org.akalasok.stocks.web;
+
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Path;
+
+import org.akalasok.stocks.domain.Stock;
+import org.akalasok.stocks.domain.StockRepository;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.LocalServerPort;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+/**
+ * @author Andrei Kalasok
+ */
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class StockRestControllerTest {
+
+	@LocalServerPort
+	private int port;
+
+	private String url;
+
+	@Autowired
+	private TestRestTemplate restTemplate;
+
+	@MockBean
+	private StockRepository repository;
+
+	@Before
+	public void setUp() {
+		url = "http://localhost:" + port + "/api/stocks";
+	}
+
+	@Test
+	public void getNonExistingStock() {
+		ResponseEntity<Stock> entity = callGetStockEndPoint(1);
+
+		assertEquals(404, entity.getStatusCodeValue());
+	}
+
+	@Test
+	public void getStock() {
+		StockAnswer stock = new StockAnswer(1, "StockToGet", BigDecimal.ONE);
+		when(repository.findOne(stock.getId())).thenReturn(stock);
+
+		ResponseEntity<Stock> entity = callGetStockEndPoint(stock.getId());
+
+		assertEquals(200, entity.getStatusCodeValue());
+		assertStock(stock, entity.getBody());
+	}
+
+	@Test
+	public void getStocks() {
+		List<Stock> stocks = asList(
+				new StockAnswer(1, "GetStock1", BigDecimal.ONE),
+				new StockAnswer(2, "GetStock2", BigDecimal.TEN));
+		when(repository.findAll()).thenReturn(stocks);
+
+		Stock[] respStocks = restTemplate.getForObject(url, Stock[].class);
+
+		assertEquals(2, respStocks.length);
+		assertStock(stocks.get(0), respStocks[0]);
+		assertStock(stocks.get(1), respStocks[1]);
+	}
+
+	@Test
+	public void getStocksWithUnhandledException() {
+		when(repository.findOne(1)).thenThrow(new RuntimeException("Unhandled exception"));
+
+		String message = restTemplate.getForObject(url + "/" + 1, String.class);
+
+		assertEquals("{\"statusCode\":500,\"message\":\"Unhandled exception\"}", message);
+	}
+
+	@Test
+	public void addStock() {
+		StockAnswer stock = new StockAnswer("StockToAdd", BigDecimal.TEN);
+		doAnswer(stock).when(repository).save(any(Stock.class));
+
+		HttpStatus status = callAddStockEndPoint(stock);
+
+		assertEquals("Wrong response status", 200, status.value());
+		assertTrue("The stock hasn't been stored", stock.isStored());
+	}
+
+	@Test
+	public void updateNonExistingStock() {
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, new StockAnswer(null, BigDecimal.ZERO));
+
+		assertEquals(404, entity.getStatusCodeValue());
+	}
+
+	@Test
+	public void updateStock() {
+		StockAnswer storedStock = new StockAnswer(1, "StockToUpdate", BigDecimal.ONE);
+		when(repository.findOne(storedStock.getId())).thenReturn(storedStock);
+		StockAnswer stockToUpdate = new StockAnswer(1, "StockToUpdate", BigDecimal.TEN);
+		doAnswer(stockToUpdate).when(repository).save(any(Stock.class));
+
+		ResponseEntity<String> entity = callUpdateStockEndPoint(storedStock.getId(), stockToUpdate);
+
+		assertEquals(200, entity.getStatusCodeValue());
+		assertEquals("{\"id\":1,\"name\":\"StockToUpdate\",\"price\":10,\"lastUpdate\":null}",
+				entity.getBody());
+		assertTrue("The storedStock hasn't been updated", stockToUpdate.isStored());
+	}
+
+	@Test
+	public void updateWithEmptyBody() {
+		StockAnswer storedStock = new StockAnswer(1, "StockToUpdate", BigDecimal.ONE);
+		when(repository.findOne(storedStock.getId())).thenReturn(storedStock);
+
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, null);
+
+		assertEquals(400, entity.getStatusCodeValue());
+		assertEquals("{\"statusCode\":400,\"message\":\"Required request body is missing\"}", entity.getBody());
+	}
+
+	@Test
+	public void updateWithOptimisticLockingException() {
+		StockAnswer stock = new StockAnswer(1, null, BigDecimal.ONE);
+		when(repository.findOne(stock.getId())).thenReturn(stock);
+		when(repository.save(any(Stock.class))).thenThrow(
+				new ObjectOptimisticLockingFailureException(Stock.class, stock));
+
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, stock);
+
+		assertEquals(409, entity.getStatusCodeValue());
+		String errorMsg = "{\"statusCode\":409,\"message\":\"Simultaneous price update, please check current price and try again\"}";
+		assertEquals(errorMsg, entity.getBody());
+	}
+
+	@Test
+	public void updateWithNegativePrice() {
+		StockAnswer stock = new StockAnswer(1, null, BigDecimal.valueOf(-5.));
+		when(repository.findOne(stock.getId())).thenReturn(stock);
+		TransactionSystemException exception =
+				new TransactionSystemException("", violationException("price", "must be greater than or equal to 0"));
+		when(repository.save(any(Stock.class))).thenThrow(exception);
+
+		ResponseEntity<String> entity = callUpdateStockEndPoint(1, stock);
+
+		assertEquals(400, entity.getStatusCodeValue());
+		String errorMsg = "{\"statusCode\":400,\"message\":\"price - must be greater than or equal to 0\"}";
+		assertEquals(errorMsg, entity.getBody());
+	}
+
+	private ConstraintViolationException violationException(String pathValue, String message) {
+		ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+		Path path = mock(Path.class);
+		when(path.toString()).thenReturn(pathValue);
+		when(violation.getMessage()).thenReturn(message);
+		when(violation.getPropertyPath()).thenReturn(path);
+		return new ConstraintViolationException(new HashSet<>(Collections.singleton(violation)));
+	}
+
+	private ResponseEntity<Stock> callGetStockEndPoint(Integer id) {
+		MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+		headers.add("Accept-Type", "application/json");
+		HttpEntity<?> httpEntity = new HttpEntity<>(headers);
+		return restTemplate.exchange(
+				url + "/" + id,
+				HttpMethod.GET,
+				httpEntity,
+				Stock.class
+		);
+	}
+
+	private HttpStatus callAddStockEndPoint(Stock stock) {
+		MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+		headers.add("Content-Type", "application/json");
+		HttpEntity<?> httpEntity = new HttpEntity<>(stock, headers);
+		return restTemplate.exchange(
+				url,
+				HttpMethod.POST,
+				httpEntity,
+				String.class
+		).getStatusCode();
+	}
+
+	private ResponseEntity<String> callUpdateStockEndPoint(int id, Stock stock) {
+		MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+		headers.add("Content-Type", "application/json");
+		HttpEntity<?> httpEntity = new HttpEntity<>(stock, headers);
+		return restTemplate.exchange(
+				url + "/" + id,
+				HttpMethod.PUT,
+				httpEntity,
+				String.class
+		);
+	}
+
+	private static void assertStock(Stock stock1, Stock stock2) {
+		assertEquals(stock1.getName(), stock2.getName());
+		assertEquals(stock1.getPrice(), stock2.getPrice());
+	}
+
+	private static class StockAnswer extends Stock implements Answer {
+
+		private boolean stored = false;
+
+		private StockAnswer(int id, String name, BigDecimal price) {
+			setId(id);
+			setName(name);
+			setPrice(price);
+
+		}
+
+		private StockAnswer(String name, BigDecimal price) {
+			this(0, name, price);
+		}
+
+		@Override
+		public Object answer(InvocationOnMock invocation) throws Throwable {
+			Stock stock = (Stock) invocation.getArguments()[0];
+			assertStock(this, stock);
+			stored = true;
+			return stock;
+		}
+
+
+		private boolean isStored() {
+			return stored;
+		}
+	}
+}

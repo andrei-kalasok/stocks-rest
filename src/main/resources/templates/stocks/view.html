@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Stocks : View</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}"
+          href="../../css/bootstrap.min.css"/>
+</head>
+<body>
+<div class="container">
+    <div th:replace="fragments :: navbar"></div>
+    <h1>Stocks : View</h1>
+    <div class="pull-right">
+        <a th:href="@{/}" href="list.html"> Stocks </a>
+    </div>
+    <dl>
+        <dt>ID</dt>
+        <dd id="id" th:text="${stock.id}">123</dd>
+        <dt>Name</dt>
+        <dd id="summary" th:text="${stock.name}">A name...</dd>
+        <dt>Price</dt>
+        <dd id="text" th:text="${stock.price}">0.</dd>
+        <dt>Modified</dt>
+        <dd id="created" th:text="${#calendars.format(stock.lastUpdate)}">
+            July 31, 2017 4:43:14 PM CET
+        </dd>
+    </dl>
+    <div class="pull-left">
+        <a href="stocks" th:href="@{'/delete/' + ${stock.id}}">delete </a> |
+        <a href="form.html" th:href="@{'/modify/' + ${stock.id}}"> modify </a>
+    </div>
+</div>
+</body>
+</html>
