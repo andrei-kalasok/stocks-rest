@@ -9,9 +9,6 @@
 <div class="container">
     <div th:replace="fragments :: navbar"></div>
     <h1>Stocks : View</h1>
-    <div class="alert alert-success" th:if="${globalMessage}"
-         th:text="${globalMessage}">Some global message
-    </div>
     <div class="pull-right">
         <a th:href="@{/}" href="list.html"> Stocks </a>
     </div>

@@ -60,8 +60,7 @@ public class StockWebController {
 	}
 
 	@PostMapping
-	public ModelAndView create(@Valid Stock newStock, BindingResult result,
-	                           RedirectAttributes redirect) {
+	public ModelAndView create(@Valid Stock newStock, BindingResult result, RedirectAttributes redirect) {
 		if (result.hasErrors()) {
 			return new ModelAndView("stocks/form", "formErrors", result.getAllErrors());
 		}
@@ -71,21 +70,24 @@ public class StockWebController {
 			stock = repository.findOne(newStock.getId());
 			stock.setPrice(newStock.getPrice());
 			stock.setName(newStock.getName());
-			message = "Successfully updated a stock";
+			message = "Successfully updated ";
 		} else {
 			stock = newStock;
-			message = "Successfully created a new stock";
+			message = "Successfully created ";
 		}
-		stock = this.repository.save(stock);
+		message += "'" + stock.getName() + "' stock";
+		this.repository.save(stock);
 		redirect.addFlashAttribute("globalMessage", message);
-		return new ModelAndView("redirect:/{stock.id}", "stock.id", stock.getId());
+		return new ModelAndView("redirect:/");
 	}
 
+
 	@GetMapping(value = "delete/{id}")
-	public ModelAndView delete(@PathVariable("id") int id) {
+	public ModelAndView delete(@PathVariable("id") int id, RedirectAttributes redirect) {
+		String message = "Successfully deleted '" + this.repository.findOne(id).getName() + "' stock";
 		this.repository.delete(id);
-		Iterable<Stock> stocks = this.repository.findAll();
-		return new ModelAndView("stocks/list", "stocks", stocks);
+		redirect.addFlashAttribute("globalMessage", message);
+		return new ModelAndView("redirect:/");
 	}
 
 	@GetMapping(value = "modify/{id}")
