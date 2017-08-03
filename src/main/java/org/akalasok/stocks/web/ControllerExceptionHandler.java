@@ -35,7 +35,7 @@ public class ControllerExceptionHandler {
 	}
 
 	@ExceptionHandler(value = ObjectOptimisticLockingFailureException.class)
-	public ResponseEntity<?> handleOptimisticLockingException(HttpServletRequest req, Exception e){
+	public ResponseEntity<?> handleOptimisticLockingException(HttpServletRequest req){
 		logger.warn("Race condition price update on '{} {}'",
 				req.getMethod(),
 				req.getRequestURI() + (req.getQueryString() != null ? req.getQueryString() : ""));
